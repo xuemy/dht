@@ -80,8 +80,8 @@ func (p *peerContactsSet) Size() int {
 
 func newPeerStore() *peerStore {
 	return &peerStore{
-		infoHashPeers:        cache.NewLRUCache(uint64(MaxInfoHashes)),
-		localActiveDownloads: make(map[InfoHash]bool),
+		infoHashPeers: cache.NewLRUCache(uint64(MaxInfoHashes)),
+		// localActiveDownloads: make(map[InfoHash]bool),
 	}
 }
 
@@ -90,7 +90,7 @@ type peerStore struct {
 	// values are peerContactsSet.
 	infoHashPeers *cache.LRUCache
 	// infoHashes for which we are peers.
-	localActiveDownloads map[InfoHash]bool
+	// localActiveDownloads map[InfoHash]bool
 }
 
 func (h *peerStore) size() int {

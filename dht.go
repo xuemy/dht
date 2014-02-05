@@ -19,12 +19,12 @@ package dht
 //      get_peers:
 //	       the real deal. Iteratively queries DHT nodes and find new sources
 //	       for a particular infohash.
-//	announce_peer:
+//		announce_peer:
 //         announce that the peer associated with this node is downloading a
 //         torrent.
 //
 // Reference:
-//     http://www.bittorrent.org/beps/bep_0005.html
+//     	
 //
 
 import (
@@ -54,12 +54,13 @@ func init() {
 	flag.StringVar(&dhtRouters, "routers", "1.a.magnets.im:6881,router.utorrent.com:6881",
 		"Comma separated IP:Port address of the DHT routeirs used to bootstrap the DHT network.")
 	flag.IntVar(&maxNodes, "maxNodes", 500,
-		"Maximum number of nodes to store in the routing table, in memory. This is the primary configuration for how noisy or aggressive this node should be. When the node starts, it will try to reach maxNodes/2 as quick as possible, to form a healthy routing table.")
+		"Maximum number of nodes to store in the routing table, in memory. 
+		This is the primary configuration for how noisy or aggressive this node should be. When the node starts, it will try to reach maxNodes/2 as quick as possible, to form a healthy routing table.")
 	flag.DurationVar(&cleanupPeriod, "cleanupPeriod", 15*time.Minute,
 		"How often to ping nodes in the network to see if they are reachable.")
 	flag.DurationVar(&savePeriod, "savePeriod", 5*time.Minute,
 		"How often to save the routing table to disk.")
-	flag.Int64Var(&rateLimit, "rateLimit", 100,
+	flag.Int64Var(&rateLimit, "rateLimit", 100,	
 		"Maximum packets per second to be processed. Beyond this limit they are silently dropped. Set to -1 to disable rate limiting.")
 
 	// TODO: Control the verbosity via flag.
@@ -92,6 +93,7 @@ type DHT struct {
 
 	exploredNeighborhood   bool
 	remoteNodeAcquaintance chan string
+
 	peersRequest           chan ihReq
 	nodesRequest           chan ihReq
 	pingRequest            chan *remoteNode
@@ -160,6 +162,7 @@ type Logger interface {
 	GetPeers(*net.UDPAddr, string, InfoHash)
 }
 
+// info hash Request
 type ihReq struct {
 	ih       InfoHash
 	announce bool
@@ -260,7 +263,7 @@ func (d *DHT) DoDHT() {
 
 	for {
 		select {
-		case addr := <-d.remoteNodeAcquaintance:
+		case addr := <-d.remoteNode :
 			d.helloFromPeer(addr)
 		case req := <-d.peersRequest:
 			// torrent server is asking for more peers for infoHash.  Ask the closest
@@ -439,6 +442,7 @@ func (d *DHT) processPacket(p packetType) {
 		} else {
 			l4g.Info("DHT: Unknown query id: %v", r.T)
 		}
+
 	case r.Y == "q":
 		_, addr, existed, err := d.routingTable.hostPortToNode(p.raddr.String())
 		if err != nil {
@@ -571,6 +575,10 @@ func (d *DHT) replyAnnouncePeer(addr *net.UDPAddr, r responseType) {
 			addr, r.A.Id, ih, r.A.Port, hashDistance(ih, InfoHash(d.nodeId)),
 		)
 	})
+	// announce_peer 保存到数据库中
+
+
+	
 	if d.checkToken(addr, r.A.Token) {
 		peerAddr := net.TCPAddr{IP: addr.IP, Port: r.A.Port}
 		d.peerStore.addContact(ih, nettools.DottedPortToBinary(peerAddr.String()))
@@ -587,8 +595,8 @@ func (d *DHT) replyAnnouncePeer(addr *net.UDPAddr, r responseType) {
 func (d *DHT) replyGetPeers(addr *net.UDPAddr, r responseType) {
 	totalRecvGetPeers.Add(1)
 	l4g.Info(func() string {
-		return fmt.Sprintf("DHT get_peers. Host: %v , nodeID: %x , InfoHash: %x , distance to me: %x",
-			addr, r.A.Id, InfoHash(r.A.InfoHash), hashDistance(r.A.InfoHash, InfoHash(d.nodeId)))
+		return fmt.Sprintf("DHT get_peers. Port:%v ,Host: %v , nodeID: %x , InfoHash: %x , distance to me: %x",
+			d.port,addr, r.A.Id, InfoHash(r.A.InfoHash), hashDistance(r.A.InfoHash, InfoHash(d.nodeId)))
 	})
 
 	if d.Logger != nil {

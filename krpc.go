@@ -16,9 +16,11 @@ import (
 )
 
 // Owned by the DHT engine.
+//远程节点
 type remoteNode struct {
 	address *net.UDPAddr
 	// addressDotFormatted contains a binary representation of the node's host:port address.
+	//
 	addressBinaryFormat string
 	id                  string
 	// lastQueryID should be incremented after consumed. Based on the
@@ -33,6 +35,7 @@ type remoteNode struct {
 	ActiveDownloads  []string // List of infohashes we know this peer is downloading.
 }
 
+//新的远程节点
 func newRemoteNode(addr *net.UDPAddr, id string) *remoteNode {
 	return &remoteNode{
 		address:             addr,
